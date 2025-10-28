@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>To-Do List with Save, Date, Edit & Clear</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f5f5f5;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      height: 100vh;
+      padding-top: 50px;
+    }
+
+    .todo-container {
+      background: #fff;
+      width: 400px;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    h2 {
+      text-align: center;
+      color: #333;
+    }
+
+    .input-group {
+      display: flex;
+      margin-bottom: 15px;
+    }
+
+    input[type="text"] {
+      flex: 1;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 5px 0 0 5px;
+      outline: none;
+    }
+
+    button {
+      padding: 10px 15px;
+      border: none;
+      background: #007bff;
+      color: #fff;
+      border-radius: 0 5px 5px 0;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #0056b3;
+    }
+
+    ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    li {
+      background: #f9f9f9;
+      margin-bottom: 10px;
+      padding: 10px;
+      border-radius: 5px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 4px;
+    }
+
+    li.completed {
+      text-decoration: line-through;
+      color: #888;
+    }
+
+    .task-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .task-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .delete-btn, .edit-btn {
+      background: none;
+      border: none;
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 16px;
+    }
+
+    .delete-btn {
+      color: red;
+    }
+
+    .edit-btn {
+      color: #007bff;
+    }
+
+    .date {
+      font-size: 12px;
+      color: #666;
+    }
+
+    #clearAll {
+      display: block;
+      width: 100%;
+      margin-top: 10px;
+      background: #dc3545;
+      border-radius: 5px;
+    }
+
+    #clearAll:hover {
+      background: #b52b39;
+    }
+  </style>
+</head>
+<body>
+  <div class="todo-container">
+    <h2>🧾 My To-Do List</h2>
+    <div class="input-group">
+      <input type="text" id="taskInput" placeholder="Enter a new task..." />
+      <button id="addBtn">Add</button>
+    </div>
+    <ul id="taskList"></ul>
+    <button id="clearAll">Clear All Tasks</button>
+  </div>
+
+  <script>
+    const addBtn = document.getElementById("addBtn");
+    const taskInput = document.getElementById("taskInput");
+    const taskList = document.getElementById("taskList");
+    const clearAll = document.getElementById("clearAll");
+
+    // Load saved tasks from localStorage
+    window.onload = loadTasks;
+
+    addBtn.addEventListener("click", addTask);
+    taskInput.addEventListener("keypress", (e) => {
+      if (e.key === "Enter") addTask();
+    });
+    clearAll.addEventListener("click", () => {
+      if (confirm("Are you sure you want to clear all tasks?")) {
+        taskList.innerHTML = "";
+        saveTasks();
+      }
+    });
+
+    function addTask() {
+      const taskText = taskInput.value.trim();
+      if (taskText === "") return;
+
+      const now = new Date();
+      const date = now.toLocaleString("en-US", {
+        dateStyle: "medium",
+        timeStyle: "short"
+      });
+
+      const li = document.createElement("li");
+
+      const header = document.createElement("div");
+      header.classList.add("task-header");
+
+      const span = document.createElement("span");
+      span.textContent = taskText;
+
+      const actions = document.createElement("div");
+      actions.classList.add("task-actions");
+
+      const editBtn = document.createElement("button");
+      editBtn.textContent = "✏️";
+      editBtn.classList.add("edit-btn");
+
+      editBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        editTask(span, li);
+      });
+
+      const deleteBtn = document.createElement("button");
+      deleteBtn.textContent = "×";
+      deleteBtn.classList.add("delete-btn");
+      deleteBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        li.remove();
+        saveTasks();
+      });
+
+      actions.appendChild(editBtn);
+      actions.appendChild(deleteBtn);
+
+      header.appendChild(span);
+      header.appendChild(actions);
+
+      const dateText = document.createElement("div");
+      dateText.textContent = `Added on ${date}`;
+      dateText.classList.add("date");
+
+      li.appendChild(header);
+      li.appendChild(dateText);
+
+      li.addEventListener("click", () => {
+        li.classList.toggle("completed");
+        saveTasks();
+      });
+
+      taskList.appendChild(li);
+      taskInput.value = "";
+      taskInput.focus();
+      saveTasks();
+    }
+
+    function editTask(span, li) {
+      const oldText = span.textContent;
+      const input = document.createElement("input");
+      input.type = "text";
+      input.value = oldText;
+      input.style.flex = "1";
+      span.replaceWith(input);
+      input.focus();
+
+      input.addEventListener("keypress", (e) => {
+        if (e.key === "Enter") {
+          finishEdit(input, li);
+        }
+      });
+
+      input.addEventListener("blur", () => {
+        finishEdit(input, li);
+      });
+    }
+
+    function finishEdit(input, li) {
+      const newText = input.value.trim() || "Untitled Task";
+      const newSpan = document.createElement("span");
+      newSpan.textContent = newText;
+
+      input.replaceWith(newSpan);
+      saveTasks();
+    }
+
+    function saveTasks() {
+      localStorage.setItem("tasks", taskList.innerHTML);
+    }
+
+    function loadTasks() {
+      const saved = localStorage.getItem("tasks");
+      if (saved) {
+        taskList.innerHTML = saved;
+
+        // Reattach event listeners
+        taskList.querySelectorAll("li").forEach((li) => {
+          li.addEventListener("click", () => {
+            li.classList.toggle("completed");
+            saveTasks();
+          });
+
+          li.querySelector(".delete-btn").addEventListener("click", (e) => {
+            e.stopPropagation();
+            li.remove();
+            saveTasks();
+          });
+
+          const editBtn = li.querySelector(".edit-btn");
+          const span = li.querySelector("span");
+          if (editBtn && span) {
+            editBtn.addEventListener("click", (e) => {
+              e.stopPropagation();
+              editTask(span, li);
+            });
+          }
+        });
+      }
+    }
+  </script>
+</body>
+</html>
