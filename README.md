@@ -28,12 +28,4 @@ This simple project helps you manage tasks efficiently — add, edit, delete, an
 
 ## Live Demo
 
-👉 **[todo.janjeffersonlam.co](https://todo.janjeffersonlam.co)**
-
----
-
-## Installation
-
-1. Clone the repository  
-   ```bash
-   git clone https://github.com/jasper626/todo-app.git
+**[todo.jasperlam.xyz](https://todo.jasperlam.xyz/)**
